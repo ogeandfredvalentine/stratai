@@ -173,25 +173,31 @@ const SECTIONS = [
   { key: "ROADMAP_30_DAY",       label: "30-Day Roadmap",       icon: "▶" },
 ];
 
-function buildPrompt(p, wp) {
-  return `You are a contrarian Web3 growth strategist. You find what is actually broken and prescribe strategies most advisors would never suggest.
-
-RULES:
+const RULES = `RULES:
 - Never use em dashes or en dashes. Use commas, colons, or plain hyphens only.
 - No generic advice. "Post consistently" and "build community" are not advice. If you write either, delete it.
 - Call out real problems bluntly. Weak tokenomics, confused positioning, fantasy roadmaps - name them.
 - Every strategy must be unexpected and specific. What would a 10-year Web3 veteran find surprising?
 - Think cross-industry: gaming, creator economy, fintech, cult brands. Import tactics nobody in Web3 is using.
-- ANTI-GENERIC CHECK: Before writing each section, ask - would a lazy consultant write this? If yes, rewrite it.
+- ANTI-GENERIC CHECK: Before writing each section, ask - would a lazy consultant write this? If yes, rewrite it.`;
 
-PROJECT:
+function projectContext(p, wp) {
+  return `PROJECT:
 - Name: ${p.name}
 - Website: ${p.website || "Not provided"}
 - Twitter/X: ${p.twitter || "Not provided"}
 - Description: ${p.description}
-${wp ? `- Whitepaper:\n${wp.slice(0, 4000)}` : ""}
+${wp ? `- Whitepaper:\n${wp.slice(0, 4000)}` : ""}`;
+}
 
-CRITICAL INSTRUCTION: You MUST begin your response with the exact text ===REPORT_START=== and end with ===REPORT_END===. Do not write anything before ===REPORT_START=== or after ===REPORT_END===. This is required for the system to parse your output.
+function buildPrompt1(p, wp) {
+  return `You are a contrarian Web3 growth strategist. You find what is actually broken and prescribe strategies most advisors would never suggest.
+
+${RULES}
+
+${projectContext(p, wp)}
+
+CRITICAL INSTRUCTION: You MUST begin your response with the exact text ===REPORT_START=== and end with ===PART1_END===. Do not write anything before ===REPORT_START=== or after ===PART1_END===.
 
 ===REPORT_START===
 
@@ -212,6 +218,20 @@ CRITICAL INSTRUCTION: You MUST begin your response with the exact text ===REPORT
 
 ##WEAKNESSES##
 [3-5 brutal honest weaknesses. What would a skeptical investor attack?]
+
+===PART1_END===`;
+}
+
+function buildPrompt2(p, wp) {
+  return `You are a contrarian Web3 growth strategist. You find what is actually broken and prescribe strategies most advisors would never suggest.
+
+${RULES}
+
+${projectContext(p, wp)}
+
+CRITICAL INSTRUCTION: You MUST begin your response with the exact text ===PART2_START=== and end with ===REPORT_END===. Do not write anything before ===PART2_START=== or after ===REPORT_END===.
+
+===PART2_START===
 
 ##GROWTH_OPPORTUNITIES##
 [3-5 unconventional growth levers. Distribution hacks, audience arbitrage, underpriced channels. Explain why each works.]
@@ -234,19 +254,7 @@ Week 4 - Review: what signal to look for and what to scale]
 ===REPORT_END===`;
 }
 
-function parseReport(raw) {
-  // Try to find markers, be flexible with whitespace
-  const sIdx = raw.search(/={3}REPORT_START={3}/);
-  const eIdx = raw.search(/={3}REPORT_END={3}/);
-
-  let body;
-  if (sIdx !== -1 && eIdx !== -1) {
-    body = raw.slice(sIdx + 18, eIdx).trim();
-  } else {
-    // Fallback: try to parse directly if markers missing but section tags exist
-    body = raw;
-  }
-
+function parseSections(body) {
   const result = {};
   SECTIONS.forEach((sec, i) => {
     const tag = `##${sec.key}##`;
@@ -257,6 +265,22 @@ function parseReport(raw) {
     const end = nextTag ? body.indexOf(nextTag) : body.length;
     result[sec.key] = body.slice(start, end === -1 ? undefined : end).trim();
   });
+  return result;
+}
+
+function parseReport(raw1, raw2) {
+  // Extract body from part 1
+  const s1 = raw1.search(/={3}REPORT_START={3}/);
+  const e1 = raw1.search(/={3}PART1_END={3}/);
+  const body1 = (s1 !== -1 && e1 !== -1) ? raw1.slice(s1 + 18, e1).trim() : raw1;
+
+  // Extract body from part 2
+  const s2 = raw2.search(/={3}PART2_START={3}/);
+  const e2 = raw2.search(/={3}REPORT_END={3}/);
+  const body2 = (s2 !== -1 && e2 !== -1) ? raw2.slice(s2 + 14, e2).trim() : raw2;
+
+  const combined = body1 + "\n\n" + body2;
+  const result = parseSections(combined);
   return Object.keys(result).length > 3 ? result : null;
 }
 
@@ -380,8 +404,11 @@ function AnalyzerMode() {
     setError("");
     setStep("loading");
     try {
-      const raw = await askClaude([{ role: "user", content: buildPrompt(project, wpText) }], null, 4000);
-      const parsed = parseReport(raw);
+      const [raw1, raw2] = await Promise.all([
+        askClaude([{ role: "user", content: buildPrompt1(project, wpText) }], null, 4000),
+        askClaude([{ role: "user", content: buildPrompt2(project, wpText) }], null, 4000),
+      ]);
+      const parsed = parseReport(raw1, raw2);
       if (!parsed) throw new Error("The AI did not follow the report format. Please try again.");
       setReport(parsed);
       setStep("report");
@@ -401,7 +428,7 @@ function AnalyzerMode() {
   if (step === "loading") return (
     <div style={{ background: G.surface, border: `1px solid ${G.border}`, borderRadius: G.radius, padding: "56px 24px", textAlign: "center" }}>
       <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}><Spinner /></div>
-      {["Diagnosing real problems...", "Finding unconventional angles...", "Building your 30-day roadmap..."].map((t, i) => (
+      {["Diagnosing real problems...", "Finding unconventional angles...", "Building growth strategy...", "Writing 30-day roadmap..."].map((t, i) => (
         <div key={i} style={{ fontSize: "0.73rem", color: G.muted, fontFamily: "JetBrains Mono, monospace", marginTop: 8, animation: `fadeUp 0.4s ease ${i * 0.15}s both` }}>{t}</div>
       ))}
     </div>
