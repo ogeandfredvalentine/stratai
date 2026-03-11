@@ -15,12 +15,13 @@ CRITICAL OUTPUT RULES - FOLLOW EXACTLY:
 2. Every recommendation must include: WHAT to do, HOW to do it specifically, and WHY it works for this project.
 3. Never write vague lines like "build community" or "create content". Name the exact tactic, platform, and mechanic.
 4. For every growth tactic, include a concrete example of how it looks in practice for this specific project.
-5. For competitor analysis, name real projects or companies. Describe what they do well and where they fall short.
-6. For content ideas, give the actual title or angle, the format, and the reason it works.
+5. For competitor analysis, name REAL, ACTUAL competitors in the same space. Do not name unrelated projects.
+6. For content ideas, give the actual title or angle, the specific format, and the reason it works.
 7. For the 30-day roadmap, give specific tasks under each week, not just themes.
 8. When listing items, put each one on its own line starting with a number and period e.g. "1. First item".
-9. Be unconventional. If your advice sounds generic, rewrite it.
-10. Minimum 150 words per section.
+9. ANTI-GENERIC CHECK: Before writing each section, ask yourself - would a lazy consultant write this? If yes, delete it and start over with something that would surprise a 10-year Web3 veteran.
+10. Think cross-industry. What tactics from gaming, creator economy, fintech, or cult brands apply here that no Web3 advisor would suggest?
+11. Minimum 150 words per section.
 `;
 
   try {
@@ -44,7 +45,7 @@ CRITICAL OUTPUT RULES - FOLLOW EXACTLY:
         "Authorization": `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: "deepseek-r1-distill-llama-70b",
         max_tokens: body.max_tokens || 6000,
         temperature: 0.8,
         messages: groqMessages,

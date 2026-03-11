@@ -117,7 +117,15 @@ function TArea({ label, value, onChange, placeholder, rows = 5 }) {
 
 // ── ANALYZER ─────────────────────────────────────────────────────────────────
 
-// Renders text with proper stacked lists instead of inline numbered items
+// Converts **bold** markdown into <strong> elements
+function parseBold(text) {
+  const parts = text.split(/\*\*(.+?)\*\*/g);
+  return parts.map((part, i) =>
+    i % 2 === 1 ? <strong key={i}>{part}</strong> : part
+  );
+}
+
+// Renders text with proper stacked lists and bold support
 function renderContent(text) {
   if (!text) return null;
   const lines = text.split("\n");
@@ -125,16 +133,14 @@ function renderContent(text) {
     <div>
       {lines.map((line, i) => {
         const trimmed = line.trim();
-        // Numbered list: 1. or 1)
         const numbered = trimmed.match(/^(\d+[\.\)])\s+(.+)/);
-        // Bulleted list: - or *
         const bulleted = trimmed.match(/^[-*]\s+(.+)/);
 
         if (numbered) {
           return (
             <div key={i} style={{ display: "flex", gap: 10, marginBottom: 6 }}>
               <span style={{ flexShrink: 0, fontWeight: 700, color: G.accent }}>{numbered[1]}</span>
-              <span>{numbered[2]}</span>
+              <span>{parseBold(numbered[2])}</span>
             </div>
           );
         }
@@ -142,12 +148,12 @@ function renderContent(text) {
           return (
             <div key={i} style={{ display: "flex", gap: 10, marginBottom: 6 }}>
               <span style={{ flexShrink: 0, color: G.accent }}>-</span>
-              <span>{bulleted[1]}</span>
+              <span>{parseBold(bulleted[1])}</span>
             </div>
           );
         }
         if (trimmed === "") return <div key={i} style={{ height: 8 }} />;
-        return <p key={i} style={{ marginBottom: 8 }}>{line}</p>;
+        return <p key={i} style={{ marginBottom: 8 }}>{parseBold(line)}</p>;
       })}
     </div>
   );
@@ -172,10 +178,11 @@ function buildPrompt(p, wp) {
 
 RULES:
 - Never use em dashes or en dashes. Use commas, colons, or plain hyphens only.
-- No generic advice. "Post consistently" and "build community" are not advice.
-- Call out real problems bluntly.
-- Every strategy must be unexpected and specific.
-- Think cross-industry.
+- No generic advice. "Post consistently" and "build community" are not advice. If you write either, delete it.
+- Call out real problems bluntly. Weak tokenomics, confused positioning, fantasy roadmaps - name them.
+- Every strategy must be unexpected and specific. What would a 10-year Web3 veteran find surprising?
+- Think cross-industry: gaming, creator economy, fintech, cult brands. Import tactics nobody in Web3 is using.
+- ANTI-GENERIC CHECK: Before writing each section, ask - would a lazy consultant write this? If yes, rewrite it.
 
 PROJECT:
 - Name: ${p.name}
