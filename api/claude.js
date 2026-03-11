@@ -45,7 +45,7 @@ CRITICAL OUTPUT RULES - FOLLOW EXACTLY:
         "Authorization": `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "deepseek-r1-distill-llama-70b",
+        model: "openai/gpt-oss-120b",
         max_tokens: body.max_tokens || 6000,
         temperature: 0.8,
         messages: groqMessages,
