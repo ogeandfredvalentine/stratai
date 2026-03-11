@@ -25,7 +25,7 @@ function cleanText(t) {
 async function askClaude(messages, system, maxTokens = 1500) {
   const body = { model: "claude-sonnet-4-20250514", max_tokens: maxTokens, messages };
   if (system) body.system = system;
-  const res = await fetch("/api/claude", {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -116,6 +116,42 @@ function TArea({ label, value, onChange, placeholder, rows = 5 }) {
 }
 
 // ── ANALYZER ─────────────────────────────────────────────────────────────────
+
+// Renders text with proper stacked lists instead of inline numbered items
+function renderContent(text) {
+  if (!text) return null;
+  const lines = text.split("\n");
+  return (
+    <div>
+      {lines.map((line, i) => {
+        const trimmed = line.trim();
+        // Numbered list: 1. or 1)
+        const numbered = trimmed.match(/^(\d+[\.\)])\s+(.+)/);
+        // Bulleted list: - or *
+        const bulleted = trimmed.match(/^[-*]\s+(.+)/);
+
+        if (numbered) {
+          return (
+            <div key={i} style={{ display: "flex", gap: 10, marginBottom: 6 }}>
+              <span style={{ flexShrink: 0, fontWeight: 700, color: G.accent }}>{numbered[1]}</span>
+              <span>{numbered[2]}</span>
+            </div>
+          );
+        }
+        if (bulleted) {
+          return (
+            <div key={i} style={{ display: "flex", gap: 10, marginBottom: 6 }}>
+              <span style={{ flexShrink: 0, color: G.accent }}>-</span>
+              <span>{bulleted[1]}</span>
+            </div>
+          );
+        }
+        if (trimmed === "") return <div key={i} style={{ height: 8 }} />;
+        return <p key={i} style={{ marginBottom: 8 }}>{line}</p>;
+      })}
+    </div>
+  );
+}
 
 const SECTIONS = [
   { key: "PROJECT_SUMMARY",      label: "Project Summary",      icon: "◈" },
@@ -221,17 +257,39 @@ function ReportView({ report, project, onReset }) {
 
   const print = () => {
     const w = window.open("", "_blank");
-    w.document.write(`<html><head><title>${project.name} Strategy</title>
-    <style>body{font-family:Georgia,serif;max-width:700px;margin:48px auto;color:#111;padding:0 24px}
-    h1{font-size:1.8rem}.meta{color:#777;font-size:0.82rem;margin-bottom:32px;border-bottom:3px solid #7cffd4;padding-bottom:12px;margin-top:6px}
-    h2{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;background:#7cffd4;color:#000;padding:4px 10px;display:inline-block;margin:28px 0 10px}
-    p{line-height:1.85;color:#333;white-space:pre-wrap;font-size:0.9rem}
-    footer{margin-top:48px;font-size:0.7rem;color:#aaa;border-top:1px solid #eee;padding-top:12px}
+    w.document.write(`<html><head><title>${project.name} - Growth Strategy</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Georgia&display=swap');
+      *{box-sizing:border-box;margin:0;padding:0}
+      body{font-family:Georgia,serif;max-width:740px;margin:0 auto;color:#111;padding:48px 32px}
+      .brand-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:36px;padding-bottom:20px;border-bottom:3px solid #7cffd4}
+      .brand-name{font-family:'Outfit',sans-serif;font-weight:800;font-size:1.1rem;letter-spacing:-0.02em;color:#050508}
+      .brand-name span{color:#059669}
+      .brand-tag{font-family:'Outfit',sans-serif;font-size:0.68rem;color:#888;text-transform:uppercase;letter-spacing:0.1em}
+      .report-title{font-family:'Outfit',sans-serif;font-size:2rem;font-weight:800;letter-spacing:-0.03em;margin-bottom:6px;color:#050508}
+      .meta{color:#777;font-size:0.82rem;margin-bottom:36px;padding-bottom:16px;border-bottom:1px solid #eee}
+      h2{font-family:'Outfit',sans-serif;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.12em;background:#7cffd4;color:#000;padding:5px 12px;display:inline-block;margin:32px 0 12px;font-weight:700}
+      p{line-height:1.9;color:#333;white-space:pre-wrap;font-size:0.91rem}
+      .footer{margin-top:56px;padding-top:14px;border-top:1px solid #eee;display:flex;justify-content:space-between;align-items:center}
+      .footer-brand{font-family:'Outfit',sans-serif;font-weight:700;font-size:0.75rem;color:#333}
+      .footer-brand span{color:#059669}
+      .footer-note{font-size:0.7rem;color:#aaa}
     </style></head><body>
-    <h1>Web3 Growth Strategy</h1>
-    <p class="meta">Project: <strong>${project.name}</strong> &nbsp; ${project.website || ""} &nbsp; ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</p>
+    <div class="brand-header">
+      <div>
+        <div class="brand-name">Fredrick Strategy <span>Lab</span></div>
+        <div class="brand-tag">Growth & Brand Architecture</div>
+      </div>
+      <div class="brand-tag">${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</div>
+    </div>
+    <div class="report-title">Web3 Growth Strategy</div>
+    <p class="meta">Project: <strong>${project.name}</strong>${project.website ? ` &nbsp; ${project.website}` : ""}${project.twitter ? ` &nbsp; ${project.twitter}` : ""}</p>
     ${SECTIONS.filter(s => report[s.key]).map(s => `<h2>${s.label}</h2><p>${report[s.key]}</p>`).join("")}
-    <footer>Generated by StratAI</footer></body></html>`);
+    <div class="footer">
+      <div class="footer-brand">Fredrick Strategy <span>Lab</span></div>
+      <div class="footer-note">Prepared by StratAI - AI Growth Strategist</div>
+    </div>
+    </body></html>`);
     w.document.close(); w.print();
   };
 
@@ -270,8 +328,8 @@ function ReportView({ report, project, onReset }) {
           <div style={{ fontSize: "0.62rem", textTransform: "uppercase", letterSpacing: "0.12em", color: G.accent, marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
             <span>{activeSec?.icon}</span>{activeSec?.label}
           </div>
-          <div key={active} style={{ fontSize: "0.89rem", lineHeight: 1.85, color: "#ccc", whiteSpace: "pre-wrap", animation: "fadeIn 0.2s ease" }}>
-            {report[active] || "No content for this section."}
+          <div key={active} style={{ fontSize: "0.89rem", lineHeight: 1.85, color: "#ccc", animation: "fadeIn 0.2s ease" }}>
+            {renderContent(report[active] || "No content for this section.")}
           </div>
         </div>
       </div>
@@ -442,15 +500,38 @@ function ChatReportCard({ report, onNew }) {
   };
   const print = () => {
     const w = window.open("", "_blank");
-    w.document.write(`<html><head><title>${report.businessName} Strategy</title>
-    <style>body{font-family:Georgia,serif;max-width:680px;margin:48px auto;color:#111;padding:0 24px}
-    h1{font-size:1.8rem}.meta{color:#777;font-size:0.82rem;margin-bottom:32px;border-bottom:3px solid #7cffd4;padding-bottom:12px;margin-top:6px}
-    h2{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;background:#7cffd4;color:#000;padding:4px 10px;display:inline-block;margin:28px 0 10px}
-    p{line-height:1.85;color:#333;white-space:pre-wrap;font-size:0.9rem}
+    w.document.write(`<html><head><title>${report.businessName} - Growth Strategy</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap');
+      *{box-sizing:border-box;margin:0;padding:0}
+      body{font-family:Georgia,serif;max-width:740px;margin:0 auto;color:#111;padding:48px 32px}
+      .brand-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:36px;padding-bottom:20px;border-bottom:3px solid #7cffd4}
+      .brand-name{font-family:'Outfit',sans-serif;font-weight:800;font-size:1.1rem;letter-spacing:-0.02em;color:#050508}
+      .brand-name span{color:#059669}
+      .brand-tag{font-family:'Outfit',sans-serif;font-size:0.68rem;color:#888;text-transform:uppercase;letter-spacing:0.1em}
+      .report-title{font-family:'Outfit',sans-serif;font-size:2rem;font-weight:800;letter-spacing:-0.03em;margin-bottom:6px;color:#050508}
+      .meta{color:#777;font-size:0.82rem;margin-bottom:36px;padding-bottom:16px;border-bottom:1px solid #eee}
+      h2{font-family:'Outfit',sans-serif;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.12em;background:#7cffd4;color:#000;padding:5px 12px;display:inline-block;margin:32px 0 12px;font-weight:700}
+      p{line-height:1.9;color:#333;white-space:pre-wrap;font-size:0.91rem}
+      .footer{margin-top:56px;padding-top:14px;border-top:1px solid #eee;display:flex;justify-content:space-between;align-items:center}
+      .footer-brand{font-family:'Outfit',sans-serif;font-weight:700;font-size:0.75rem;color:#333}
+      .footer-brand span{color:#059669}
+      .footer-note{font-size:0.7rem;color:#aaa}
     </style></head><body>
-    <h1>Growth Strategy</h1>
-    <p class="meta">Business: <strong>${report.businessName}</strong> &nbsp; ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</p>
+    <div class="brand-header">
+      <div>
+        <div class="brand-name">Fredrick Strategy <span>Lab</span></div>
+        <div class="brand-tag">Growth & Brand Architecture</div>
+      </div>
+      <div class="brand-tag">${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</div>
+    </div>
+    <div class="report-title">Growth Strategy</div>
+    <p class="meta">Business: <strong>${report.businessName}</strong></p>
     ${CHAT_SECS.filter(s => report.sections[s]).map(s => `<h2>${s}</h2><p>${report.sections[s]}</p>`).join("")}
+    <div class="footer">
+      <div class="footer-brand">Fredrick Strategy <span>Lab</span></div>
+      <div class="footer-note">Prepared by StratAI - AI Growth Strategist</div>
+    </div>
     </body></html>`);
     w.document.close(); w.print();
   };
@@ -463,7 +544,7 @@ function ChatReportCard({ report, onNew }) {
         {CHAT_SECS.filter(s => report.sections[s]).map(sec => (
           <div key={sec} style={{ marginBottom: 18 }}>
             <div style={{ fontSize: "0.66rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: G.accent, marginBottom: 5 }}>{sec}</div>
-            <p style={{ fontSize: "0.85rem", color: "#bbb", lineHeight: 1.78, margin: 0, whiteSpace: "pre-wrap" }}>{report.sections[sec]}</p>
+            <div style={{ fontSize: "0.85rem", color: "#bbb", lineHeight: 1.78 }}>{renderContent(report.sections[sec])}</div>
           </div>
         ))}
       </div>
