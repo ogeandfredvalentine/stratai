@@ -22,9 +22,10 @@ function cleanText(t) {
   return t.replace(/\u2014/g, "-").replace(/\u2013/g, "-");
 }
 
-async function askClaude(messages, system, maxTokens = 1500) {
+async function askClaude(messages, system, maxTokens = 1500, websiteUrl = null) {
   const body = { messages, max_tokens: maxTokens };
   if (system) body.system = system;
+  if (websiteUrl) body.websiteUrl = websiteUrl;
   const res = await fetch("/api/claude", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -427,9 +428,10 @@ function AnalyzerMode() {
     setError("");
     setStep("loading");
     try {
+      const websiteUrl = project.website || null;
       const [raw1, raw2] = await Promise.all([
-        askClaude([{ role: "user", content: buildPrompt1(project, wpText) }], null, 4000),
-        askClaude([{ role: "user", content: buildPrompt2(project, wpText) }], null, 4000),
+        askClaude([{ role: "user", content: buildPrompt1(project, wpText) }], null, 4000, websiteUrl),
+        askClaude([{ role: "user", content: buildPrompt2(project, wpText) }], null, 4000, websiteUrl),
       ]);
       const parsed = parseReport(raw1, raw2);
       if (!parsed) throw new Error("The AI did not follow the report format. Please try again.");
@@ -451,7 +453,7 @@ function AnalyzerMode() {
   if (step === "loading") return (
     <div style={{ background: G.surface, border: `1px solid ${G.border}`, borderRadius: G.radius, padding: "56px 24px", textAlign: "center" }}>
       <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}><Spinner /></div>
-      {["Diagnosing real problems...", "Finding unconventional angles...", "Building growth strategy...", "Writing 30-day roadmap..."].map((t, i) => (
+      {[project.website ? "Reading website..." : "Processing inputs...", "Diagnosing real problems...", "Finding unconventional angles...", "Writing 30-day roadmap..."].map((t, i) => (
         <div key={i} style={{ fontSize: "0.73rem", color: G.muted, fontFamily: "JetBrains Mono, monospace", marginTop: 8, animation: `fadeUp 0.4s ease ${i * 0.15}s both` }}>{t}</div>
       ))}
     </div>

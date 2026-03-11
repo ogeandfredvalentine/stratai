@@ -1,3 +1,41 @@
+async function fetchWebsite(url) {
+  if (!url) return null;
+  try {
+    // Normalize URL
+    if (!url.startsWith("http")) url = "https://" + url;
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; StratAI/1.0; +https://stratai.vercel.app)",
+        "Accept": "text/html,application/xhtml+xml",
+      },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+
+    // Strip HTML tags, scripts, styles down to readable text
+    const text = html
+      .replace(/<script[\s\S]*?<\/script>/gi, "")
+      .replace(/<style[\s\S]*?<\/style>/gi, "")
+      .replace(/<nav[\s\S]*?<\/nav>/gi, "")
+      .replace(/<footer[\s\S]*?<\/footer>/gi, "")
+      .replace(/<header[\s\S]*?<\/header>/gi, "")
+      .replace(/<!--[\s\S]*?-->/g, "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&nbsp;/g, " ")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+
+    // Return first 3000 chars - enough to understand the site
+    return text.slice(0, 3000);
+  } catch (err) {
+    return null;
+  }
+}
+
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -22,15 +60,27 @@ CRITICAL OUTPUT RULES - FOLLOW EXACTLY:
 9. ANTI-GENERIC CHECK: Before writing each section, ask yourself - would a lazy consultant write this? If yes, delete it and start over with something that would surprise a 10-year Web3 veteran.
 10. Think cross-industry. What tactics from gaming, creator economy, fintech, or cult brands apply here that no Web3 advisor would suggest?
 11. Minimum 150 words per section.
+12. ACCURACY RULE: Only state facts that are grounded in the website content or user-provided fields. If you are inferring, use "appears to" or "likely". Never fabricate team details, metrics, or product features.
 `;
 
   try {
     const body = req.body;
+
+    // Fetch website if URL provided and this is an analyzer request
+    let websiteContent = null;
+    if (body.websiteUrl) {
+      websiteContent = await fetchWebsite(body.websiteUrl);
+    }
+
     const groqMessages = [];
 
-    const systemContent = body.system
-      ? body.system + "\n\n" + STRUCTURE_ENFORCER
-      : STRUCTURE_ENFORCER;
+    let systemContent = STRUCTURE_ENFORCER;
+    if (body.system) systemContent = body.system + "\n\n" + STRUCTURE_ENFORCER;
+
+    // Inject website content into system if available
+    if (websiteContent) {
+      systemContent += `\n\nWEBSITE CONTENT (scraped live from ${body.websiteUrl}):\n"""\n${websiteContent}\n"""\nUse this to ground your analysis in what the project actually says about itself.`;
+    }
 
     groqMessages.push({ role: "system", content: systemContent });
 
@@ -60,6 +110,7 @@ CRITICAL OUTPUT RULES - FOLLOW EXACTLY:
 
     return res.status(200).json({
       content: [{ type: "text", text: data.choices?.[0]?.message?.content || "" }],
+      websiteFetched: !!websiteContent,
     });
 
   } catch (err) {
