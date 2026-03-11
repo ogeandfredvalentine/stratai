@@ -168,14 +168,14 @@ const SECTIONS = [
 ];
 
 function buildPrompt(p, wp) {
-  return `You are a contrarian Web3 growth strategist known for finding what is actually broken in a project and prescribing strategies that most advisors would never suggest. You think like a hacker, a behavioral economist, and a community anthropologist.
+  return `You are a contrarian Web3 growth strategist. You find what is actually broken and prescribe strategies most advisors would never suggest.
 
 RULES:
-- Never use em dashes or en dashes. Commas, colons, or plain hyphens only.
+- Never use em dashes or en dashes. Use commas, colons, or plain hyphens only.
 - No generic advice. "Post consistently" and "build community" are not advice.
-- Call out real problems bluntly: confused positioning, weak tokenomics, fantasy roadmaps.
-- Every strategy must be unexpected and specific. What would the top 1 percent of growth operators do?
-- Think cross-industry. What works in gaming, creator economy, or underground movements that applies here?
+- Call out real problems bluntly.
+- Every strategy must be unexpected and specific.
+- Think cross-industry.
 
 PROJECT:
 - Name: ${p.name}
@@ -184,7 +184,7 @@ PROJECT:
 - Description: ${p.description}
 ${wp ? `- Whitepaper:\n${wp.slice(0, 4000)}` : ""}
 
-Output ONLY the report below. No preamble. No text outside the tags.
+CRITICAL INSTRUCTION: You MUST begin your response with the exact text ===REPORT_START=== and end with ===REPORT_END===. Do not write anything before ===REPORT_START=== or after ===REPORT_END===. This is required for the system to parse your output.
 
 ===REPORT_START===
 
@@ -192,46 +192,54 @@ Output ONLY the report below. No preamble. No text outside the tags.
 [Honest read of what this project actually is. Not their marketing. 3-5 sentences.]
 
 ##TARGET_AUDIENCE##
-[Who actually wants this. Define by behavior and identity. Name subcultures and platforms where they gather. Include who they are ignoring but should target.]
+[Who actually wants this. Define by behavior and identity. Name subcultures and platforms where they gather.]
 
 ##MARKET_POSITIONING##
-[The narrative this project should own that nobody else has claimed. What category to create or reframe. The contrarian angle that flips the script on obvious positioning.]
+[The narrative this project should own that nobody else has claimed. The contrarian angle.]
 
 ##COMPETITOR_ANALYSIS##
-[3-5 real competitors. What they are actually good at, what they are quietly failing at, the specific gap to exploit. Be surgical.]
+[3-5 real competitors. What they are actually good at, what they are failing at, the specific gap to exploit.]
 
 ##STRENGTHS##
 [4-6 genuine strengths. What is structurally hard to copy? What unfair advantages are being underused?]
 
 ##WEAKNESSES##
-[3-5 brutal honest weaknesses. What would a skeptical investor attack? Narrative gaps, token design flaws, community blind spots, timing problems.]
+[3-5 brutal honest weaknesses. What would a skeptical investor attack?]
 
 ##GROWTH_OPPORTUNITIES##
-[3-5 unconventional growth levers. Distribution hacks, audience arbitrage, mechanic imports from other industries, underpriced channels, unexpected coalitions. Explain why each works for this specific project.]
+[3-5 unconventional growth levers. Distribution hacks, audience arbitrage, underpriced channels. Explain why each works.]
 
 ##COMMUNITY_STRATEGY##
-[Specific community architecture: who the core 100 true believers are, how to recruit them, what rituals create belonging, what makes a member evangelize without being asked. Specific tactics only.]
+[Specific community architecture. Who the core 100 believers are, how to recruit them, what rituals create belonging.]
 
 ##CONTENT_STRATEGY##
-[6-8 genuinely creative content plays. Each with a clear angle, specific format, and reason it works. What formats are underused here? What tension or story can this project own?]
+[6-8 creative content plays. Each with a clear angle, specific format, and reason it works.]
 
 ##PARTNERSHIP_STRATEGY##
-[3-5 non-obvious partnership plays. Unexpected allies, adjacent communities, cross-industry players that give distribution nobody else has. Name specific targets and the exchange of value.]
+[3-5 non-obvious partnership plays. Name specific targets and the exchange of value.]
 
 ##ROADMAP_30_DAY##
-[Week 1 - Diagnosis and Foundation: the 3 things to fix or lock in immediately
-Week 2 - Activation: the first public move and why it is designed to spread
-Week 3 - Amplification: how to pour fuel on what is working
-Week 4 - Review and Double Down: what signal to look for and what to scale]
+[Week 1 - Foundation: 3 things to fix immediately
+Week 2 - Activation: first public move and why it spreads
+Week 3 - Amplification: pour fuel on what is working
+Week 4 - Review: what signal to look for and what to scale]
 
 ===REPORT_END===`;
 }
 
 function parseReport(raw) {
-  const s = raw.indexOf("===REPORT_START===");
-  const e = raw.indexOf("===REPORT_END===");
-  if (s === -1 || e === -1) return null;
-  const body = raw.slice(s + 18, e).trim();
+  // Try to find markers, be flexible with whitespace
+  const sIdx = raw.search(/={3}REPORT_START={3}/);
+  const eIdx = raw.search(/={3}REPORT_END={3}/);
+
+  let body;
+  if (sIdx !== -1 && eIdx !== -1) {
+    body = raw.slice(sIdx + 18, eIdx).trim();
+  } else {
+    // Fallback: try to parse directly if markers missing but section tags exist
+    body = raw;
+  }
+
   const result = {};
   SECTIONS.forEach((sec, i) => {
     const tag = `##${sec.key}##`;
@@ -699,7 +707,7 @@ export default function StratAI() {
               Strat<span style={{ color: G.accent }}>AI</span>
             </div>
             <div style={{ fontSize: "0.7rem", color: G.muted, marginTop: 2 }}>
-              {mode === "analyzer" ? "Deep Web3 analysis - 11 sections" : "Conversational growth strategy."}
+              {mode === "analyzer" ? "Deep Web3 analysis - 11 sections" : "Conversational growth strategy"}
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
