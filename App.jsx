@@ -407,11 +407,23 @@ function AnalyzerMode() {
     r.readAsText(f);
   };
 
+  const [qualityWarn, setQualityWarn] = useState(false);
+
   const submit = async () => {
     if (!project.name.trim() || !project.what.trim()) {
-      setError("Project name and description are required.");
+      setError("Project name and a description of what it does are required.");
       return;
     }
+    if (project.what.trim().length < 100) {
+      setError("The \"What does it do?\" field is too short. Add at least 100 characters - the more detail you give, the more accurate the strategy will be.");
+      return;
+    }
+    const emptyCount = [project.team, project.traction, project.tech, project.competitors].filter(f => !f.trim()).length;
+    if (emptyCount >= 3 && !qualityWarn) {
+      setQualityWarn(true);
+      return;
+    }
+    setQualityWarn(false);
     setError("");
     setStep("loading");
     try {
@@ -458,6 +470,9 @@ function AnalyzerMode() {
         <TInput label="Twitter / X Handle" value={project.twitter} onChange={set("twitter")} placeholder="@yourproject" />
         <TArea label="What does it do? *" value={project.what} onChange={set("what")} rows={3}
           placeholder="What problem does it solve and how? What makes it different from existing solutions?" />
+        <div style={{ fontSize: "0.67rem", color: project.what.length >= 100 ? G.accent : G.muted, marginTop: -10, marginBottom: 14, textAlign: "right" }}>
+          {project.what.length}/100 min characters {project.what.length >= 100 ? "✓" : ""}
+        </div>
         <TArea label="Team & Background" value={project.team} onChange={set("team")} rows={2}
           placeholder="Who built this? Relevant experience, past projects, credentials. Leave blank if unknown." />
         <TArea label="Traction & Metrics" value={project.traction} onChange={set("traction")} rows={2}
@@ -482,10 +497,28 @@ function AnalyzerMode() {
         </Field>
       </div>
       {error && <div style={{ background: "#ff4d4d10", border: "1px solid #ff4d4d33", borderRadius: 10, padding: "12px 16px", marginBottom: 14, fontSize: "0.82rem", color: "#ff8888", lineHeight: 1.5 }}>{error}</div>}
-      <button onClick={submit} style={{ width: "100%", padding: "14px", borderRadius: G.radius, background: G.accent, border: "none", color: "#000", fontFamily: "Outfit, sans-serif", fontWeight: 800, fontSize: "0.92rem", cursor: "pointer", transition: "opacity 0.2s" }}
-        onMouseEnter={e => e.currentTarget.style.opacity = "0.85"} onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
-        Generate Growth Strategy
-      </button>
+      {qualityWarn && (
+        <div style={{ background: "#f59e0b10", border: "1px solid #f59e0b44", borderRadius: 10, padding: "16px 18px", marginBottom: 14, lineHeight: 1.6 }}>
+          <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "#f59e0b", marginBottom: 6 }}>Low detail warning</div>
+          <div style={{ fontSize: "0.79rem", color: "#ccc" }}>
+            Most fields are empty. The AI will have to guess team details, traction, and tech - which means some findings may be inaccurate or fabricated. For best results, fill in as many fields as possible.
+          </div>
+          <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+            <button onClick={() => setQualityWarn(false)} style={{ padding: "7px 16px", borderRadius: 8, border: `1px solid ${G.border}`, background: "transparent", color: G.muted, fontFamily: "Outfit, sans-serif", fontSize: "0.75rem", cursor: "pointer" }}>
+              Go back and add more
+            </button>
+            <button onClick={submit} style={{ padding: "7px 16px", borderRadius: 8, border: "1px solid #f59e0b", background: "transparent", color: "#f59e0b", fontFamily: "Outfit, sans-serif", fontWeight: 700, fontSize: "0.75rem", cursor: "pointer" }}>
+              Generate anyway
+            </button>
+          </div>
+        </div>
+      )}
+      {!qualityWarn && (
+        <button onClick={submit} style={{ width: "100%", padding: "14px", borderRadius: G.radius, background: G.accent, border: "none", color: "#000", fontFamily: "Outfit, sans-serif", fontWeight: 800, fontSize: "0.92rem", cursor: "pointer", transition: "opacity 0.2s" }}
+          onMouseEnter={e => e.currentTarget.style.opacity = "0.85"} onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
+          Generate Growth Strategy
+        </button>
+      )}
       <p style={{ textAlign: "center", fontSize: "0.68rem", color: G.muted, marginTop: 10 }}>11 sections - unconventional strategy - 15-30 seconds</p>
     </div>
   );
