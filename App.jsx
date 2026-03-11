@@ -18,24 +18,53 @@ const CSS = `
   @keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
 `;
 
+const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
+
+const STRUCTURE_ENFORCER = `
+CRITICAL OUTPUT RULES - FOLLOW EXACTLY:
+1. Every section must have minimum 4-6 sentences. No short paragraphs.
+2. Every recommendation must include: WHAT to do, HOW to do it specifically, and WHY it works for this project.
+3. Never write vague lines like "build community" or "create content". Name the exact tactic, platform, and mechanic.
+4. For every growth tactic, include a concrete example of how it looks in practice for this specific project.
+5. For competitor analysis, name real projects or companies. Describe specifically what they do well and where they fall short.
+6. For content ideas, give the actual title or angle, the format, and the reason it works.
+7. For the 30-day roadmap, give specific tasks under each week, not just themes.
+8. When listing items, put each one on its own line starting with a number and period e.g. "1. First item".
+9. Be unconventional. If your advice sounds generic, rewrite it.
+10. Minimum 150 words per section.
+`;
+
 function cleanText(t) {
   return t.replace(/\u2014/g, "-").replace(/\u2013/g, "-");
 }
 
 async function askClaude(messages, system, maxTokens = 1500) {
-  const body = { model: "claude-sonnet-4-20250514", max_tokens: maxTokens, messages };
-  if (system) body.system = system;
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+  const groqMessages = [];
+  if (system) groqMessages.push({ role: "system", content: system + "\n\n" + STRUCTURE_ENFORCER });
+  for (const msg of messages) {
+    groqMessages.push({ role: msg.role, content: msg.content });
+  }
+
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${GROQ_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: "llama-3.3-70b-versatile",
+      max_tokens: maxTokens,
+      temperature: 0.8,
+      messages: groqMessages,
+    }),
   });
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err?.error?.message || `HTTP ${res.status}`);
   }
   const data = await res.json();
-  const text = data?.content?.find(b => b.type === "text")?.text || "";
+  const text = data?.choices?.[0]?.message?.content || "";
   if (!text) throw new Error("Empty response");
   return cleanText(text);
 }
