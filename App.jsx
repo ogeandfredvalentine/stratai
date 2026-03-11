@@ -699,7 +699,7 @@ export default function StratAI() {
               Strat<span style={{ color: G.accent }}>AI</span>
             </div>
             <div style={{ fontSize: "0.7rem", color: G.muted, marginTop: 2 }}>
-              {mode === "analyzer" ? "Deep Web3 analysis - 11 sections" : "Conversational growth strategy"}
+              {mode === "analyzer" ? "Deep Web3 analysis - 11 sections" : "Conversational growth strategy."}
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
