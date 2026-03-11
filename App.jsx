@@ -186,8 +186,14 @@ function projectContext(p, wp) {
 - Name: ${p.name}
 - Website: ${p.website || "Not provided"}
 - Twitter/X: ${p.twitter || "Not provided"}
-- Description: ${p.description}
-${wp ? `- Whitepaper:\n${wp.slice(0, 4000)}` : ""}`;
+- What it does: ${p.what}
+- Team & background: ${p.team || "Not provided - do not fabricate team details"}
+- Traction & metrics: ${p.traction || "Not provided - do not fabricate numbers or achievements"}
+- Tech stack & product: ${p.tech || "Not provided"}
+- Known competitors: ${p.competitors || "Not provided"}
+${wp ? `- Whitepaper:\n${wp.slice(0, 4000)}` : ""}
+
+IMPORTANT: Only state facts the user has provided above. If a field says "Not provided", do not invent details for it. For Strengths and Weaknesses especially, base your analysis only on what is stated here. If you are inferring something, say "appears to" or "likely" rather than stating it as fact.`;
 }
 
 function buildPrompt1(p, wp) {
@@ -367,6 +373,11 @@ function ReportView({ report, project, onReset }) {
           <div style={{ fontSize: "0.62rem", textTransform: "uppercase", letterSpacing: "0.12em", color: G.accent, marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
             <span>{activeSec?.icon}</span>{activeSec?.label}
           </div>
+          {(active === "STRENGTHS" || active === "WEAKNESSES" || active === "PROJECT_SUMMARY") && (
+            <div style={{ background: "#7cffd408", border: "1px solid #7cffd422", borderRadius: 8, padding: "8px 12px", marginBottom: 14, fontSize: "0.7rem", color: G.muted, lineHeight: 1.5 }}>
+              <span style={{ color: G.accent }}>AI inference</span> - These findings are based only on information you provided. Verify before sharing externally.
+            </div>
+          )}
           <div key={active} style={{ fontSize: "0.89rem", lineHeight: 1.85, color: "#ccc", animation: "fadeIn 0.2s ease" }}>
             {renderContent(report[active] || "No content for this section.")}
           </div>
@@ -378,7 +389,7 @@ function ReportView({ report, project, onReset }) {
 
 function AnalyzerMode() {
   const [step, setStep] = useState("form");
-  const [project, setProject] = useState({ name: "", website: "", twitter: "", description: "" });
+  const [project, setProject] = useState({ name: "", website: "", twitter: "", what: "", team: "", traction: "", tech: "", competitors: "" });
   const [wpText, setWpText] = useState("");
   const [wpName, setWpName] = useState("");
   const [report, setReport] = useState(null);
@@ -397,7 +408,7 @@ function AnalyzerMode() {
   };
 
   const submit = async () => {
-    if (!project.name.trim() || !project.description.trim()) {
+    if (!project.name.trim() || !project.what.trim()) {
       setError("Project name and description are required.");
       return;
     }
@@ -420,7 +431,7 @@ function AnalyzerMode() {
 
   const reset = () => {
     setStep("form"); setReport(null); setError("");
-    setProject({ name: "", website: "", twitter: "", description: "" });
+    setProject({ name: "", website: "", twitter: "", what: "", team: "", traction: "", tech: "", competitors: "" });
     setWpText(""); setWpName("");
     if (fileRef.current) fileRef.current.value = "";
   };
@@ -445,8 +456,16 @@ function AnalyzerMode() {
           <TInput label="Website" value={project.website} onChange={set("website")} placeholder="https://yourproject.io" />
         </div>
         <TInput label="Twitter / X Handle" value={project.twitter} onChange={set("twitter")} placeholder="@yourproject" />
-        <TArea label="Project Description *" value={project.description} onChange={set("description")}
-          placeholder="Describe your project: what problem it solves, token model, traction so far, target users. More detail = sharper strategy." />
+        <TArea label="What does it do? *" value={project.what} onChange={set("what")} rows={3}
+          placeholder="What problem does it solve and how? What makes it different from existing solutions?" />
+        <TArea label="Team & Background" value={project.team} onChange={set("team")} rows={2}
+          placeholder="Who built this? Relevant experience, past projects, credentials. Leave blank if unknown." />
+        <TArea label="Traction & Metrics" value={project.traction} onChange={set("traction")} rows={2}
+          placeholder="Users, revenue, TVL, community size, partnerships secured - any real numbers you have." />
+        <TArea label="Tech Stack & Product" value={project.tech} onChange={set("tech")} rows={2}
+          placeholder="Chains supported, token model, key product features, stage of development." />
+        <TArea label="Known Competitors" value={project.competitors} onChange={set("competitors")} rows={2}
+          placeholder="Who are you competing with directly? What do they do better or worse?" />
         <Field label="Whitepaper (optional - deepens analysis)">
           <div onClick={() => fileRef.current?.click()} style={{
             border: `1px dashed ${wpName ? G.accent : G.border}`, borderRadius: G.radius,
