@@ -1,4 +1,14 @@
 export default async function handler(req, res) {
+  // Handle CORS
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  // Handle preflight
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -14,16 +24,15 @@ export default async function handler(req, res) {
     const messages = [];
 
     const structureEnforcer = `
-CRITICAL OUTPUT RULES - FOLLOW EXACTLY OR YOUR RESPONSE IS WRONG:
-
-1. Every section must have a minimum of 4-6 sentences. No short paragraphs.
+CRITICAL OUTPUT RULES - FOLLOW EXACTLY:
+1. Every section must have minimum 4-6 sentences. No short paragraphs.
 2. Every recommendation must include: WHAT to do, HOW to do it specifically, and WHY it works for this project.
-3. Never write vague lines like "build community" or "create content". Name the exact tactic, the exact platform, the exact mechanic.
-4. For every growth tactic, include a concrete example of how it would look in practice for this specific project.
+3. Never write vague lines like "build community" or "create content". Name the exact tactic, platform, and mechanic.
+4. For every growth tactic, include a concrete example of how it looks in practice for this specific project.
 5. For competitor analysis, name real projects or companies. Describe specifically what they do well and where they fall short.
-6. For content ideas, give the actual title or angle, the format (thread, video, AMA, etc.), and the reason it works.
-7. For the 30-day roadmap, give specific tasks under each week — not just themes.
-8. Write in clear flowing paragraphs. No bullet points. No lazy one-liners.
+6. For content ideas, give the actual title or angle, the format, and the reason it works.
+7. For the 30-day roadmap, give specific tasks under each week, not just themes.
+8. When listing items, put each one on its own line starting with a number and period (e.g. "1. First item").
 9. Be unconventional. If your advice sounds generic, rewrite it.
 10. Minimum 150 words per section.
 `;
