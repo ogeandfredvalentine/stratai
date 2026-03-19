@@ -60,7 +60,8 @@ CRITICAL OUTPUT RULES - FOLLOW EXACTLY:
 9. ANTI-GENERIC CHECK: Before writing each section, ask yourself - would a lazy consultant write this? If yes, delete it and start over with something that would surprise a 10-year Web3 veteran.
 10. Think cross-industry. What tactics from gaming, creator economy, fintech, or cult brands apply here that no Web3 advisor would suggest?
 11. Minimum 150 words per section.
-12. ACCURACY RULE: Only state facts that are grounded in the website content or user-provided fields. If you are inferring, use "appears to" or "likely". Never fabricate team details, metrics, or product features.
+12. ACCURACY RULE: Only state facts grounded in the website content or user-provided fields. If inferring, say "appears to" or "likely". Never fabricate team details, metrics, proprietary tools, awards, or product features that were not explicitly mentioned.
+13. STRENGTHS RULE: For the Strengths section specifically, every point must be traceable to something explicitly stated on the website or by the user. If you cannot find enough real strengths, write fewer points. Do not pad with invented capabilities.
 `;
 
   try {

@@ -221,10 +221,10 @@ CRITICAL INSTRUCTION: You MUST begin your response with the exact text ===REPORT
 [3-5 real competitors. What they are actually good at, what they are failing at, the specific gap to exploit.]
 
 ##STRENGTHS##
-[4-6 genuine strengths. What is structurally hard to copy? What unfair advantages are being underused?]
+[4-6 genuine strengths based ONLY on what is explicitly stated on the website or provided by the user. Do not invent tools, systems, awards, or capabilities that were not mentioned. If the website mentions specific claims, quote or paraphrase them directly. If you cannot find 4 real strengths from the provided information, list fewer rather than fabricate.]
 
 ##WEAKNESSES##
-[3-5 brutal honest weaknesses. What would a skeptical investor attack?]
+[3-5 brutal honest weaknesses based on what is visibly missing or contradictory on the website and user inputs. Do not invent internal problems. Only critique what you can actually observe from the provided information.]
 
 ===PART1_END===`;
 }
